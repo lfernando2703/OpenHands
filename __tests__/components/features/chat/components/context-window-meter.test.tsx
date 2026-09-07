@@ -56,10 +56,12 @@ vi.mock("#/components/shared/buttons/styled-tooltip", () => ({
 
 // eslint-disable-next-line import/first
 import { ContextWindowMeter } from "#/components/features/chat/components/context-window-meter";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 
 describe("ContextWindowMeter", () => {
   afterEach(() => {
     navigateToTabMock.mockClear();
+    useContextEngineeringStore.setState({ isPanelOpen: false });
     useMetricsStore.setState({
       cost: null,
       max_budget_per_task: null,
@@ -122,7 +124,7 @@ describe("ContextWindowMeter", () => {
     expect(trigger.className).not.toContain("--oh-interactive-hover");
   });
 
-  it("opens a popover with compact usage details", () => {
+  it("opens the context engineering panel with compact usage details", () => {
     useMetricsStore.setState({
       cost: null,
       max_budget_per_task: null,
@@ -141,21 +143,14 @@ describe("ContextWindowMeter", () => {
     fireEvent.click(screen.getByTestId("context-window-meter"));
 
     expect(
-      screen.getByTestId("context-window-meter-popover"),
+      screen.getByTestId("context-engineering-panel"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("20% CONVERSATION$USED (80% CONVERSATION$LEFT)"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("198.5k / 1.0M")).toBeInTheDocument();
     expect(
       screen.getByTestId("context-window-compact-button"),
     ).toHaveTextContent("CONVERSATION$COMPACT_CONTEXT");
-    expect(
-      screen.getByText("CONVERSATION$CONTEXT_WINDOW"),
-    ).toBeInTheDocument();
   });
 
-  it("opens the Usage drawer from the popover meter", () => {
+  it("opens the Usage drawer from the panel meter", () => {
     useMetricsStore.setState({
       cost: 1.25,
       max_budget_per_task: null,
