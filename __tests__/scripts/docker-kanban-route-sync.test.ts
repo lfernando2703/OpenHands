@@ -69,6 +69,9 @@ describe("docker kanban route", () => {
       expect(invocation).toContain(
         '--route "/api/standards=http://127.0.0.1:${KANBAN_PORT}"',
       );
+      expect(invocation).toContain(
+        '--route "/api/context=http://127.0.0.1:${KANBAN_PORT}"',
+      );
     }
   });
 });

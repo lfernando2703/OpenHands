@@ -142,6 +142,13 @@ export const STANDARDS_QUERY_KEYS = {
   audit: () => ["standards", "audit"] as const,
 } as const;
 
+export const CONTEXT_QUERY_KEYS = {
+  all: ["context"] as const,
+  branches: (conversationId: string) =>
+    ["context", "branches", conversationId] as const,
+  config: () => ["context", "config"] as const,
+} as const;
+
 export const CHANNELS_QUERY_KEYS = {
   all: ["channels"] as const,
   list: () => ["channels", "list"] as const,

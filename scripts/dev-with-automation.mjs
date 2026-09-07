@@ -740,6 +740,7 @@ const KANBAN_ROUTE_PREFIXES = [
   "/api/channels",
   "/api/meetings",
   "/api/standards",
+  "/api/context",
 ];
 const AGENT_SERVER_ROUTE_PREFIXES = [
   "/api",

@@ -131,6 +131,13 @@
             "max_context_files": { "type": "integer", "minimum": 0 },
             "stale_after_minutes": { "type": "integer", "minimum": 0 }
           }
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_depth": { "type": "integer", "minimum": 1 }
+          }
         }
       }
     }

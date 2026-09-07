@@ -730,6 +730,7 @@ describe("stack mode routing", () => {
       "/api/channels",
       "/api/meetings",
       "/api/standards",
+      "/api/context",
     ]);
 
     for (const prefix of KANBAN_ROUTE_PREFIXES) {

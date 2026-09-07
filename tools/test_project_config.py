@@ -55,6 +55,8 @@ project:
     enabled: true
     max_context_files: 8
     graph_budget_lines: 200
+  context:
+    max_depth: 2
 """
 
 
@@ -73,6 +75,13 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertTrue(data["project"]["standards"]["plugins"][0]["enabled"])
         self.assertAlmostEqual(data["project"]["cost_cap"], 25.5)
         self.assertTrue(data["project"]["graph"]["enabled"])
+        self.assertEqual(data["project"]["context"]["max_depth"], 2)
+
+    def test_rejects_invalid_context_max_depth(self) -> None:
+        with self.assertRaises(ProjectConfigError):
+            validate_project_config(
+                {"project": {"name": "x", "context": {"max_depth": 0}}}
+            )
 
     def test_rejects_unknown_provider(self) -> None:
         data = parse_project_yaml(VALID_YAML)

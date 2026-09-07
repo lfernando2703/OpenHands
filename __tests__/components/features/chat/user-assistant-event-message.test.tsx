@@ -5,6 +5,7 @@ import type { MessageEvent } from "#/types/agent-server/core";
 import { I18nKey } from "#/i18n/declaration";
 import { UserAssistantEventMessage } from "#/components/conversation-events/chat/event-message-components/user-assistant-event-message";
 import { useConversationStore } from "#/stores/conversation-store";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import ConversationService from "#/api/conversation-service/conversation-service.api";
 import AgentServerConversationService from "#/api/conversation-service/agent-server-conversation-service.api";
 import type { AppConversation } from "#/api/conversation-service/agent-server-conversation-service.types";
@@ -41,6 +42,7 @@ vi.mock("#/context/navigation-context", async (importActual) => ({
 // test-utils re-inits i18n with empty resources, so `t()` returns the key —
 // which becomes the button's accessible name (aria-label).
 const BRANCH_LABEL = I18nKey.CHAT_INTERFACE$BRANCH_FROM_HERE;
+const FORK_HERE_LABEL = I18nKey.CONTEXT$FORK_HERE;
 const forkResult = { id: "fork-123" } as DirectConversationInfo;
 
 let forkSpy: ReturnType<typeof vi.spyOn>;
@@ -95,6 +97,7 @@ describe("UserAssistantEventMessage — branch action", () => {
     useOptionalConversationIdMock.mockReturnValue({ conversationId: "conv-1" });
 
     useConversationStore.setState({ setMessageToSend: setMessageToSendMock });
+    useContextEngineeringStore.setState({ forkRequest: null });
     ConversationService.setCurrentConversation(null);
 
     forkSpy = vi
@@ -240,6 +243,19 @@ describe("UserAssistantEventMessage — branch action", () => {
 
     await waitFor(() => expect(forkSpy).toHaveBeenCalled());
     expect(forkSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens a context-tree fork from the Fork here action", () => {
+    renderMessage(makeEvent("user", "evt-user"));
+
+    fireEvent.mouseEnter(screen.getByTestId("user-message"));
+    fireEvent.click(screen.getByRole("button", { name: FORK_HERE_LABEL }));
+
+    const request = useContextEngineeringStore.getState().forkRequest;
+    expect(request).toMatchObject({
+      conversationId: "conv-1",
+      divergedAtEventId: "evt-user",
+    });
   });
 
   it("hides the branch action on the cloud backend", () => {

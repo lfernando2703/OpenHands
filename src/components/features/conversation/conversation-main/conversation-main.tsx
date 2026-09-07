@@ -13,6 +13,7 @@ import {
 import { SidebarMobileMenuToggle } from "#/components/features/sidebar/sidebar-mobile-menu-toggle";
 import { ConversationOverviewDrawer } from "../conversation-overview-drawer";
 import { useConversationOverviewDrawerOptional } from "../conversation-overview-drawer-context";
+import { ForkDialog } from "#/components/features/context/fork-dialog";
 
 function getDesktopTabPanelClass(isRightPanelShown: boolean) {
   return isRightPanelShown
@@ -137,6 +138,7 @@ export function ConversationMain() {
           resizeContainerRef={containerRef}
         />
       </div>
+      <ForkDialog />
     </div>
   );
 }

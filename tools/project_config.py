@@ -71,6 +71,8 @@ def validate_project_config(data: dict[str, Any]) -> dict[str, Any]:
         raise ProjectConfigError("project.cost_cap must be >= 0")
     if "graph" in project:
         _validate_graph(project["graph"])
+    if "context" in project:
+        _validate_context(project["context"])
     extra = set(project) - {
         "name",
         "description",
@@ -81,6 +83,7 @@ def validate_project_config(data: dict[str, Any]) -> dict[str, Any]:
         "standards",
         "cost_cap",
         "graph",
+        "context",
     }
     if extra:
         raise ProjectConfigError(f"Unknown project keys: {sorted(extra)}")
@@ -169,6 +172,14 @@ def _validate_standards(standards: Any) -> None:
             raise ProjectConfigError("plugin needs a name")
         if not isinstance(plugin.get("enabled"), bool):
             raise ProjectConfigError("plugin.enabled must be a boolean")
+
+
+def _validate_context(context: Any) -> None:
+    if not isinstance(context, dict):
+        raise ProjectConfigError("context must be an object")
+    if "max_depth" in context:
+        if not _is_number(context["max_depth"]) or int(context["max_depth"]) < 1:
+            raise ProjectConfigError("context.max_depth must be an integer >= 1")
 
 
 def _validate_graph(graph: Any) -> None:

@@ -1,4 +1,5 @@
 import React from "react";
+import { GitBranch } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "#/context/navigation-context";
 import { MessageEvent } from "#/types/agent-server/core";
@@ -15,6 +16,7 @@ import { useOptionalConversationId } from "#/hooks/use-conversation-id";
 import { useActiveBackend } from "#/contexts/active-backend-context";
 import { useForkConversation } from "#/hooks/mutation/use-fork-conversation";
 import { useConversationStore } from "#/stores/conversation-store";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import ConversationService from "#/api/conversation-service/conversation-service.api";
 import { displayErrorToast } from "#/utils/custom-toast-handlers";
 
@@ -38,6 +40,7 @@ export function UserAssistantEventMessage({
   const setMessageToSend = useConversationStore(
     (state) => state.setMessageToSend,
   );
+  const openFork = useContextEngineeringStore((state) => state.openFork);
   // Blocks a same-tick double-click, before `isForking` flips.
   const forkInFlightRef = React.useRef(false);
 
@@ -108,6 +111,20 @@ export function UserAssistantEventMessage({
           icon: <RepoForkedIcon width={15} height={15} aria-hidden />,
           onClick: handleBranch,
           tooltip: t(I18nKey.CHAT_INTERFACE$BRANCH_FROM_HERE),
+        },
+        {
+          icon: <GitBranch size={15} aria-hidden />,
+          onClick: () => {
+            if (!conversationId) return;
+            openFork({
+              conversationId,
+              parentBranchId: null,
+              divergedAtEventTs: event.timestamp,
+              divergedAtEventId: event.id,
+              preview: message.slice(0, 80) || event.id,
+            });
+          },
+          tooltip: t(I18nKey.CONTEXT$FORK_HERE),
         },
       ]
     : undefined;

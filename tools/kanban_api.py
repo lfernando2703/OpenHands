@@ -314,6 +314,20 @@ def handle_request(
             registry.discover()
             set_active_registry(registry)
         return handle_standards(StandardsService(registry), method, path, body)
+    if pathname.startswith("/api/context"):
+        from context.api import ContextService, handle_request as handle_context
+        from context_store import (
+            ContextStore,
+            default_db_path as context_db_path,
+            get_active_store,
+            set_active_store,
+        )
+
+        store = get_active_store()
+        if store is None:
+            store = ContextStore(context_db_path())
+            set_active_store(store)
+        return handle_context(ContextService(store), method, path, body)
     try:
         for route_method, pattern, handler in ROUTES:
             if route_method != method:

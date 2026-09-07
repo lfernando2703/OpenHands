@@ -41,6 +41,7 @@ import {
   STANDARDS_HANDLERS,
   resetStandardsMockData,
 } from "./standards-handlers";
+import { CONTEXT_HANDLERS, resetContextMockData } from "./context-handlers";
 import { CHANNEL_HANDLERS, resetChannelMockData } from "./channel-handlers";
 import { MEETILY_HANDLERS } from "./meetily-handlers";
 
@@ -65,6 +66,7 @@ export const handlers = [
   ...ROUTING_HANDLERS,
   ...GRAPH_HANDLERS,
   ...STANDARDS_HANDLERS,
+  ...CONTEXT_HANDLERS,
   ...CHANNEL_HANDLERS,
   ...MEETILY_HANDLERS,
 ];
@@ -82,6 +84,7 @@ export {
   resetRoutingMockData,
   resetGraphMockData,
   resetStandardsMockData,
+  resetContextMockData,
   resetChannelMockData,
 };
 
