@@ -21,7 +21,6 @@ export default [
     route("extensions", "routes/canvas-extensions.tsx"),
     route("extensions/:extensionName/*", "routes/canvas-extension-page.tsx"),
     route("mcp", "routes/mcp.tsx"),
-    route("routing", "routes/routing.tsx"),
     route("kanban", "routes/kanban.tsx"),
     route("projects", "routes/projects.tsx"),
     route("projects/:projectId", "routes/project-detail.tsx"),
@@ -33,6 +32,7 @@ export default [
     route("settings", "routes/settings.tsx", [
       index("routes/settings-index.tsx"),
       route("llm", "routes/llm-settings.tsx"),
+      route("routing", "routes/settings-routing.tsx"),
       route("agent", "routes/agent-settings.tsx"),
       route("agents", "routes/agent-profiles-settings.tsx"),
       route("condenser", "routes/condenser-settings.tsx"),
@@ -47,6 +47,7 @@ export default [
     route("automations/templates", "routes/automation-templates.tsx"),
     route("automations/new/:automationId", "routes/automation-setup-route.tsx"),
     route("automations/:automationId", "routes/automation-detail.tsx"),
+    route("routing", "routes/routing.tsx"),
   ]),
   route(
     "shared/conversations/:conversationId",
