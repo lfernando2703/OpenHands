@@ -25,8 +25,6 @@ export default [
     route("projects", "routes/projects.tsx"),
     route("projects/:projectId", "routes/project-detail.tsx"),
     route("project-init", "routes/project-init.tsx"),
-    route("loops", "routes/loops.tsx"),
-    route("loops/runs/:runId", "routes/loops-detail.tsx"),
     route("feature-developer", "routes/feature-developer.tsx"),
     route("feature-developer/:runId", "routes/feature-developer-detail.tsx"),
     route("settings", "routes/settings.tsx", [
@@ -44,8 +42,15 @@ export default [
     route("automations", "routes/automations-list.tsx"),
     route("automations/git-sync", "routes/automation-git-sync.tsx"),
     route("automations/templates", "routes/automation-templates.tsx"),
+    route("automations/loops", "routes/automations-loops.tsx"),
+    route(
+      "automations/loops/runs/:runId",
+      "routes/automations-loops-detail.tsx",
+    ),
     route("automations/new/:automationId", "routes/automation-setup-route.tsx"),
     route("automations/:automationId", "routes/automation-detail.tsx"),
+    route("loops", "routes/loops.tsx"),
+    route("loops/runs/:runId", "routes/loops-detail.tsx"),
   ]),
   route(
     "shared/conversations/:conversationId",
