@@ -46969,5 +46969,22 @@
     "uk": "Stale after (minutes)",
     "zh-CN": "过期时间（分钟）",
     "zh-TW": "Stale after (minutes)"
+  },
+  "GRAPH$AGENT_INDEX_HINT": {
+    "en": "Agents use this index to find related files. You do not need to query it.",
+    "ar": "يستخدم الوكلاء هذا الفهرس للعثور على الملفات ذات الصلة. لا تحتاج إلى الاستعلام عنه.",
+    "ca": "Els agents usen aquest índex per trobar fitxers relacionats. No cal consultar-lo.",
+    "de": "Agenten nutzen diesen Index, um verwandte Dateien zu finden. Sie müssen ihn nicht abfragen.",
+    "es": "Los agentes usan este índice para encontrar archivos relacionados. No hace falta consultarlo.",
+    "fr": "Les agents utilisent cet index pour trouver les fichiers liés. Vous n'avez pas à l'interroger.",
+    "it": "Gli agenti usano questo indice per trovare file correlati. Non serve interrogarlo.",
+    "ja": "エージェントはこのインデックスで関連ファイルを探します。自分で検索する必要はありません。",
+    "ko-KR": "에이전트가 관련 파일을 찾도록 이 인덱스를 사용합니다. 직접 조회할 필요는 없습니다.",
+    "no": "Agenter bruker denne indeksen for å finne relaterte filer. Du trenger ikke å spørre den.",
+    "pt": "Os agentes usam este índice para achar arquivos relacionados. Você não precisa consultá-lo.",
+    "tr": "Ajanlar ilgili dosyaları bulmak için bu dizini kullanır. Sorgulamanız gerekmez.",
+    "uk": "Агенти використовують цей індекс, щоб знаходити пов’язані файли. Запитувати його не потрібно.",
+    "zh-CN": "代理用此索引查找相关文件。你无需自行查询。",
+    "zh-TW": "代理用此索引尋找相關檔案。你不必自行查詢。"
   }
 }

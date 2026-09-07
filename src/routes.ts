@@ -22,7 +22,6 @@ export default [
     route("extensions/:extensionName/*", "routes/canvas-extension-page.tsx"),
     route("mcp", "routes/mcp.tsx"),
     route("routing", "routes/routing.tsx"),
-    route("graph", "routes/graph.tsx"),
     route("channels", "routes/channels.tsx"),
     route("kanban", "routes/kanban.tsx"),
     route("projects", "routes/projects.tsx"),
@@ -49,6 +48,7 @@ export default [
     route("automations/templates", "routes/automation-templates.tsx"),
     route("automations/new/:automationId", "routes/automation-setup-route.tsx"),
     route("automations/:automationId", "routes/automation-detail.tsx"),
+    route("graph", "routes/graph.tsx"),
   ]),
   route(
     "shared/conversations/:conversationId",

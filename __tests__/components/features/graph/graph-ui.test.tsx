@@ -135,21 +135,18 @@ describe("GraphSettings", () => {
 });
 
 describe("GraphPage", () => {
-  it("wires status, query, and config PUT", async () => {
+  it("wires indexer status and config PUT without a query console", async () => {
     const user = userEvent.setup();
     vi.spyOn(GraphService, "getStatus").mockResolvedValue(STATUS);
     vi.spyOn(GraphService, "getConfig").mockResolvedValue(CONFIG);
-    vi.spyOn(GraphService, "query").mockResolvedValue(RESULT);
     const put = vi
       .spyOn(GraphService, "putConfig")
       .mockResolvedValue({ ...CONFIG, strict: true });
 
     renderWithProviders(<GraphPage />);
+    await screen.findByTestId("graph-indexer-controls");
     await screen.findByTestId("graph-indexer-status");
-    await user.click(screen.getByTestId("graph-query-submit"));
-    await waitFor(() => {
-      expect(GraphService.query).toHaveBeenCalled();
-    });
+    expect(screen.queryByTestId("graph-query-submit")).not.toBeInTheDocument();
     await user.click(
       screen.getByRole("switch", { name: I18nKey.GRAPH$STRICT }),
     );
