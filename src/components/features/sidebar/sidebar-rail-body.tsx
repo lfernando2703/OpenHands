@@ -197,6 +197,29 @@ export function SidebarRailBody({
       <nav className={sidebarNavListClassName(collapsed)}>
         <CommandMenuTrigger collapsed={collapsed} />
         <SidebarNavLink
+          to="/loops"
+          label={t(I18nKey.LOOPS$NAV)}
+          testId="sidebar-loops-link"
+          collapsed={collapsed}
+          pinAction={buildPinAction("/loops", "sidebar-pin-home-toggle-loops")}
+          icon={<Zap width={ICON_SIZE} height={ICON_SIZE} />}
+        />
+        {/* The interface manifest owns this entry's label, so an absent
+            manifest leaves the rail without it rather than with host copy. */}
+        {hasAutomationInterface() && (
+          <SidebarNavLink
+            to={automationListPath()}
+            label={getInterfaceCopy().sidebarLabel}
+            testId="sidebar-automations-link"
+            collapsed={collapsed}
+            icon={<AutomationsIcon width={ICON_SIZE} height={ICON_SIZE} />}
+            pinAction={buildPinAction(
+              automationListPath(),
+              "sidebar-pin-home-toggle-automations",
+            )}
+          />
+        )}
+        <SidebarNavLink
           to="/conversations"
           end
           label={t(I18nKey.SIDEBAR$NEW_CHAT)}
@@ -264,29 +287,6 @@ export function SidebarRailBody({
           )}
           icon={<Radio width={ICON_SIZE} height={ICON_SIZE} />}
         />
-        <SidebarNavLink
-          to="/loops"
-          label={t(I18nKey.LOOPS$NAV)}
-          testId="sidebar-loops-link"
-          collapsed={collapsed}
-          pinAction={buildPinAction("/loops", "sidebar-pin-home-toggle-loops")}
-          icon={<Zap width={ICON_SIZE} height={ICON_SIZE} />}
-        />
-        {/* The interface manifest owns this entry's label, so an absent
-            manifest leaves the rail without it rather than with host copy. */}
-        {hasAutomationInterface() && (
-          <SidebarNavLink
-            to={automationListPath()}
-            label={getInterfaceCopy().sidebarLabel}
-            testId="sidebar-automations-link"
-            collapsed={collapsed}
-            icon={<AutomationsIcon width={ICON_SIZE} height={ICON_SIZE} />}
-            pinAction={buildPinAction(
-              automationListPath(),
-              "sidebar-pin-home-toggle-automations",
-            )}
-          />
-        )}
         {canvasExtensionPages.map((page) => (
           <SidebarNavLink
             key={`${page.extension.name}:${page.contribution.id}`}

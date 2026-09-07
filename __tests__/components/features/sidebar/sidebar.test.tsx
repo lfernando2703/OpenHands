@@ -487,6 +487,7 @@ describe("Sidebar", () => {
       "sidebar-conversations-link",
       "sidebar-automations-link",
       "sidebar-skills-link",
+      "sidebar-channels-link",
       "sidebar-loops-link",
     ]) {
       const link = screen.getByTestId(testId);
@@ -507,6 +508,9 @@ describe("Sidebar", () => {
     );
     expect(screen.getByTestId("sidebar-automations-link")).toHaveTextContent(
       "Automate",
+    );
+    expect(screen.getByTestId("sidebar-channels-link")).toHaveTextContent(
+      "Channels",
     );
     expect(screen.getByTestId("sidebar-loops-link")).toHaveTextContent("Loops");
     expect(
