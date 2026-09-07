@@ -6,6 +6,7 @@ import {
   INITIAL_HISTORY_PAGE_SIZE,
   useConversationHistory,
 } from "#/hooks/query/use-conversation-history";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import { isTaskConversationId } from "#/utils/conversation-local-storage";
 import { seedModelSwitchesFromHistory } from "#/hooks/chat/record-model-switch-message";
 import type { OpenHandsEvent } from "#/types/agent-server/core";
@@ -45,9 +46,12 @@ export const useLoadOlderEvents = (
     !!conversationId && isTaskConversationId(conversationId);
   const realConversationId = isTaskConversation ? undefined : conversationId;
 
+  const rewindAnchor = useContextEngineeringStore(
+    (state) => state.rewindAnchor,
+  );
   const { data: conversation } = useUserConversation(conversationId ?? null);
   const { data: initialHistory, isFetched: isInitialHistoryFetched } =
-    useConversationHistory(realConversationId ?? undefined);
+    useConversationHistory(realConversationId ?? undefined, rewindAnchor);
   const addEvents = useEventStore((state) => state.addEvents);
 
   const [isLoading, setIsLoading] = React.useState(false);
@@ -67,7 +71,7 @@ export const useLoadOlderEvents = (
 
     hasMoreRef.current = true;
     setHasMore(true);
-  }, [conversationId, isTaskConversation]);
+  }, [conversationId, isTaskConversation, rewindAnchor]);
 
   // Mirror the initial REST page: if the tail fetch already returned
   // everything, don't auto-trigger an older-events request on short chats.
@@ -130,6 +134,7 @@ export const useLoadOlderEvents = (
           limit: INITIAL_HISTORY_PAGE_SIZE,
           sortOrder: "TIMESTAMP_DESC",
           timestampLt: oldestTimestamp,
+          ...(rewindAnchor ? { timestampGte: rewindAnchor } : {}),
         },
       );
 
@@ -169,6 +174,7 @@ export const useLoadOlderEvents = (
     conversation?.conversation_url,
     conversation?.session_api_key,
     addEvents,
+    rewindAnchor,
   ]);
 
   return { isLoading, hasMore, loadOlder };

@@ -173,13 +173,15 @@ describe("context engineering visualization", () => {
     );
   });
 
-  it("shows disabled session-modification actions until they land", async () => {
+  it("enables rewind, checkpoint, and export actions", async () => {
     vi.spyOn(GraphService, "getStatus").mockRejectedValue(new Error("missing"));
     renderWithProviders(<ContextEngineeringPanel />);
     expect(
       await screen.findByTestId("context-engineering-panel"),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("context-action-rewind")).toBeDisabled();
+    expect(screen.getByTestId("context-action-rewind")).not.toBeDisabled();
+    expect(screen.getByTestId("context-action-checkpoint")).not.toBeDisabled();
+    expect(screen.getByTestId("context-action-export")).not.toBeDisabled();
     expect(screen.getByText(I18nKey.CONTEXT$PANEL_TITLE)).toBeInTheDocument();
   });
 });

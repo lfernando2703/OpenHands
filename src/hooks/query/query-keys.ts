@@ -147,6 +147,8 @@ export const CONTEXT_QUERY_KEYS = {
   branches: (conversationId: string) =>
     ["context", "branches", conversationId] as const,
   config: () => ["context", "config"] as const,
+  checkpoints: (conversationId: string) =>
+    ["context", "checkpoints", conversationId] as const,
 } as const;
 
 export const CHANNELS_QUERY_KEYS = {

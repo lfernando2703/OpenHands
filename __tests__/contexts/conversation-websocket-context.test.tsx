@@ -14,6 +14,7 @@ import { useOptimisticUserMessageStore } from "#/stores/optimistic-user-message-
 import { useBrowserStore } from "#/stores/browser-store";
 import { useCommandStore } from "#/stores/command-store";
 import { useErrorMessageStore } from "#/stores/error-message-store";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import { useUserConversation } from "#/hooks/query/use-user-conversation";
 import { useWebSocket } from "#/hooks/use-websocket";
 import EventService from "#/api/event-service/event-service.api";
@@ -163,6 +164,7 @@ describe("ConversationWebSocketProvider — conversation-scoped event store", ()
   afterEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    useContextEngineeringStore.getState().setRewindAnchor(null);
   });
 
   // A successful model switch the agent performed on its own (via the
@@ -235,6 +237,47 @@ describe("ConversationWebSocketProvider — conversation-scoped event store", ()
     expect(wsCapture.mainOptions?.queryParams).not.toHaveProperty(
       "session_api_key",
     );
+  });
+
+  it("reseeds REST and WebSocket from a rewind after_timestamp", async () => {
+    useContextEngineeringStore
+      .getState()
+      .setRewindAnchor("2026-04-01T00:00:00.000Z");
+    const searchSpy = vi.spyOn(EventService, "searchEvents").mockResolvedValue({
+      items: [
+        {
+          ...createUserMessageEvent("user-msg-conv-rewind"),
+          timestamp: "2026-04-01T00:00:00.000Z",
+        },
+      ],
+      next_page_id: null,
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ConversationWebSocketProvider
+          conversationId="conv-rewind"
+          conversationUrl="http://localhost/api"
+        >
+          <div />
+        </ConversationWebSocketProvider>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => expect(wsCapture.mainOptions).not.toBeNull());
+    expect(searchSpy).toHaveBeenCalledWith(
+      "conv-rewind",
+      "http://localhost/api",
+      null,
+      expect.objectContaining({
+        timestampGte: "2026-04-01T00:00:00.000Z",
+      }),
+    );
+    expect(wsCapture.mainOptions?.queryParams).toMatchObject({
+      resend_mode: "since",
+      after_timestamp: "2026-04-01T00:00:00.000Z",
+    });
+    useContextEngineeringStore.getState().setRewindAnchor(null);
   });
 
   it("keeps the events socket up, with its `since` anchor, across background history refetches", async () => {

@@ -14,6 +14,9 @@ import { SidebarMobileMenuToggle } from "#/components/features/sidebar/sidebar-m
 import { ConversationOverviewDrawer } from "../conversation-overview-drawer";
 import { useConversationOverviewDrawerOptional } from "../conversation-overview-drawer-context";
 import { ForkDialog } from "#/components/features/context/fork-dialog";
+import { RewindDialog } from "#/components/features/context/rewind-dialog";
+import { CheckpointDialog } from "#/components/features/context/checkpoint-dialog";
+import { EditMessageComposer } from "#/components/features/context/edit-message-composer";
 
 function getDesktopTabPanelClass(isRightPanelShown: boolean) {
   return isRightPanelShown
@@ -139,6 +142,9 @@ export function ConversationMain() {
         />
       </div>
       <ForkDialog />
+      <RewindDialog />
+      <CheckpointDialog />
+      <EditMessageComposer />
     </div>
   );
 }
