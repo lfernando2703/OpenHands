@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { server } from "#/mocks/node";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import "@testing-library/jest-dom/vitest";
 
 // Some modules read env at import time before Vitest's per-test hooks run.
@@ -183,6 +184,7 @@ afterEach(async () => {
   installMemoryLocalStorage();
   server.resetHandlers();
   window.sessionStorage?.removeItem("openhands-active-backend");
+  useContextEngineeringStore.getState().setRewindAnchor(null);
   // Cleanup the document body after each test
   cleanup();
   // Drain any queued microtasks before jsdom is torn down between test files.

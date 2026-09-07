@@ -28,8 +28,12 @@ Handler = Callable[["ContextService", dict[str, str], JsonBody], tuple[int, Any]
 BRANCHES_PATH = "/api/context/branches"
 BRANCH_PATH = r"/api/context/branches/(?P<branch_id>[^/]+)"
 REJOIN_PATH = r"/api/context/branches/(?P<branch_id>[^/]+)/rejoin"
+REWIND_PATH = r"/api/context/branches/(?P<branch_id>[^/]+)/rewind"
 CONFIG_PATH = "/api/context/config"
 IMPORT_PATH = "/api/context/import-project-config"
+CHECKPOINTS_PATH = "/api/context/checkpoints"
+CHECKPOINT_PATH = r"/api/context/checkpoints/(?P<checkpoint_id>[^/]+)"
+EXPORT_PATH = "/api/context/export"
 
 
 class ContextService:
@@ -124,14 +128,69 @@ def _import_project(
     return 200, service.store.import_project_config(path)
 
 
+def _post_checkpoint(
+    service: ContextService, _params: dict[str, str], body: JsonBody
+) -> tuple[int, Any]:
+    payload = _json_body(body)
+    checkpoint = service.store.create_checkpoint(
+        str(payload.get("branch_id") or ""),
+        str(payload.get("label") or ""),
+        str(payload.get("at_event_ts") or ""),
+    )
+    return 200, {"checkpoint": checkpoint}
+
+
+def _list_checkpoints(
+    service: ContextService, params: dict[str, str], _body: JsonBody
+) -> tuple[int, Any]:
+    return 200, {
+        "checkpoints": service.store.list_checkpoints(
+            conversation_id=params.get("conversation_id"),
+            branch_id=params.get("branch_id"),
+        )
+    }
+
+
+def _delete_checkpoint(
+    service: ContextService, params: dict[str, str], _body: JsonBody
+) -> tuple[int, Any]:
+    service.store.delete_checkpoint(params["checkpoint_id"])
+    return 200, {"ok": True}
+
+
+def _rewind_branch(
+    service: ContextService, params: dict[str, str], body: JsonBody
+) -> tuple[int, Any]:
+    payload = _json_body(body)
+    rewind = service.store.record_rewind(
+        params["branch_id"],
+        str(payload.get("after_timestamp") or ""),
+    )
+    return 200, {"rewind": rewind}
+
+
+def _export_branch(
+    service: ContextService, params: dict[str, str], _body: JsonBody
+) -> tuple[int, Any]:
+    branch_id = str(params.get("branch_id") or "").strip()
+    if not branch_id:
+        raise ContextError("branch_id is required")
+    return 200, service.store.export_branch(branch_id)
+
+
 ROUTES: tuple[tuple[str, re.Pattern[str], Handler], ...] = (
     ("POST", re.compile(rf"^{BRANCHES_PATH}$"), _post_branch),
     ("GET", re.compile(rf"^{BRANCHES_PATH}$"), _list_branches),
     ("PUT", re.compile(rf"^{BRANCH_PATH}$"), _rename_branch),
     ("POST", re.compile(rf"^{REJOIN_PATH}$"), _rejoin),
+    ("POST", re.compile(rf"^{REWIND_PATH}$"), _rewind_branch),
     ("GET", re.compile(rf"^{CONFIG_PATH}$"), _get_config),
     ("PUT", re.compile(rf"^{CONFIG_PATH}$"), _put_config),
     ("POST", re.compile(rf"^{IMPORT_PATH}$"), _import_project),
+    ("POST", re.compile(rf"^{CHECKPOINTS_PATH}$"), _post_checkpoint),
+    ("GET", re.compile(rf"^{CHECKPOINTS_PATH}$"), _list_checkpoints),
+    ("DELETE", re.compile(rf"^{CHECKPOINT_PATH}$"), _delete_checkpoint),
+    ("GET", re.compile(rf"^{EXPORT_PATH}$"), _export_branch),
 )
 
 
@@ -172,6 +231,9 @@ class ContextRequestHandler(BaseHTTPRequestHandler):
         self._dispatch()
 
     def do_POST(self) -> None:  # noqa: N802
+        self._dispatch()
+
+    def do_DELETE(self) -> None:  # noqa: N802
         self._dispatch()
 
     def _dispatch(self) -> None:

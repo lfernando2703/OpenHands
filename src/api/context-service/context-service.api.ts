@@ -3,16 +3,23 @@ import { NoBackendAvailableError } from "../agent-server-client-options";
 import { getEffectiveLocalBackend } from "../backend-registry/active-store";
 import {
   CONTEXT_BRANCHES_PATH,
+  CONTEXT_CHECKPOINTS_PATH,
   CONTEXT_CONFIG_PATH,
+  CONTEXT_EXPORT_PATH,
   CONTEXT_FORK_BLOCK_END,
   CONTEXT_FORK_BLOCK_START,
+  CONTEXT_FORK_REVISION_PREFIX,
   CONTEXT_IMPORT_PATH,
   SESSION_API_KEY_HEADER,
 } from "./context-constants";
 import type {
   ContextBranch,
+  ContextCheckpoint,
   ContextConfig,
+  ContextExportPayload,
+  ContextRewindRecord,
   CreateContextBranchRequest,
+  CreateContextCheckpointRequest,
   RejoinContextBranchRequest,
 } from "./context-types";
 
@@ -35,13 +42,18 @@ export function buildContextForkSuffix(options: {
   parentBranchId: string | null;
   divergedAtEventId: string;
   divergedAtEventTs: string;
+  revisionNote?: string;
 }): string {
-  return [
+  const lines = [
     CONTEXT_FORK_BLOCK_START,
     `Parent branch: ${options.parentBranchName}${options.parentBranchId ? ` (${options.parentBranchId})` : ""}`,
     `Diverged at: ${options.divergedAtEventId} (${options.divergedAtEventTs})`,
-    CONTEXT_FORK_BLOCK_END,
-  ].join("\n");
+  ];
+  if (options.revisionNote) {
+    lines.push(`${CONTEXT_FORK_REVISION_PREFIX} ${options.revisionNote}`);
+  }
+  lines.push(CONTEXT_FORK_BLOCK_END);
+  return lines.join("\n");
 }
 
 export const ContextService = {
@@ -106,6 +118,57 @@ export const ContextService = {
       {
         path,
       },
+    );
+    return data;
+  },
+
+  listCheckpoints: async (params: {
+    conversationId?: string;
+    branchId?: string;
+  }): Promise<ContextCheckpoint[]> => {
+    const { data } = await contextAxios.get<{
+      checkpoints: ContextCheckpoint[];
+    }>(CONTEXT_CHECKPOINTS_PATH, {
+      params: {
+        ...(params.conversationId
+          ? { conversation_id: params.conversationId }
+          : {}),
+        ...(params.branchId ? { branch_id: params.branchId } : {}),
+      },
+    });
+    return data.checkpoints;
+  },
+
+  createCheckpoint: async (
+    payload: CreateContextCheckpointRequest,
+  ): Promise<ContextCheckpoint> => {
+    const { data } = await contextAxios.post<{
+      checkpoint: ContextCheckpoint;
+    }>(CONTEXT_CHECKPOINTS_PATH, payload);
+    return data.checkpoint;
+  },
+
+  deleteCheckpoint: async (checkpointId: string): Promise<void> => {
+    await contextAxios.delete(
+      `${CONTEXT_CHECKPOINTS_PATH}/${encodeURIComponent(checkpointId)}`,
+    );
+  },
+
+  recordRewind: async (
+    branchId: string,
+    afterTimestamp: string,
+  ): Promise<ContextRewindRecord> => {
+    const { data } = await contextAxios.post<{ rewind: ContextRewindRecord }>(
+      `${CONTEXT_BRANCHES_PATH}/${encodeURIComponent(branchId)}/rewind`,
+      { after_timestamp: afterTimestamp },
+    );
+    return data.rewind;
+  },
+
+  exportBranch: async (branchId: string): Promise<ContextExportPayload> => {
+    const { data } = await contextAxios.get<ContextExportPayload>(
+      CONTEXT_EXPORT_PATH,
+      { params: { branch_id: branchId } },
     );
     return data;
   },

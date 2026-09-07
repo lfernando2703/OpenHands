@@ -1,14 +1,18 @@
 import { http, HttpResponse } from "msw";
 import {
   CONTEXT_BRANCHES_PATH,
+  CONTEXT_CHECKPOINTS_PATH,
   CONTEXT_CONFIG_PATH,
+  CONTEXT_EXPORT_PATH,
   CONTEXT_IMPORT_PATH,
   DEFAULT_CONTEXT_MAX_DEPTH,
 } from "#/api/context-service/context-constants";
 import type {
   ContextBranch,
+  ContextCheckpoint,
   ContextConfig,
   CreateContextBranchRequest,
+  CreateContextCheckpointRequest,
 } from "#/api/context-service/context-types";
 
 const DEFAULT_CONFIG: ContextConfig = {
@@ -17,12 +21,16 @@ const DEFAULT_CONFIG: ContextConfig = {
 
 let config: ContextConfig = { ...DEFAULT_CONFIG };
 let branches: ContextBranch[] = [];
+let checkpoints: ContextCheckpoint[] = [];
 let branchCounter = 1;
+let checkpointCounter = 1;
 
 export function resetContextMockData() {
   config = { ...DEFAULT_CONFIG };
   branches = [];
+  checkpoints = [];
   branchCounter = 1;
+  checkpointCounter = 1;
 }
 
 export function seedContextBranches(items: ContextBranch[]) {
@@ -128,4 +136,68 @@ export const CONTEXT_HANDLERS = [
     return HttpResponse.json(config);
   }),
   http.post(`*${CONTEXT_IMPORT_PATH}`, () => HttpResponse.json(config)),
+  http.get(`*${CONTEXT_CHECKPOINTS_PATH}`, ({ request }) => {
+    const url = new URL(request.url);
+    const conversationId = url.searchParams.get("conversation_id");
+    const branchId = url.searchParams.get("branch_id");
+    return HttpResponse.json({
+      checkpoints: checkpoints.filter((item) => {
+        if (branchId) return item.branch_id === branchId;
+        if (conversationId) return item.conversation_id === conversationId;
+        return false;
+      }),
+    });
+  }),
+  http.post(`*${CONTEXT_CHECKPOINTS_PATH}`, async ({ request }) => {
+    const payload = (await request.json()) as CreateContextCheckpointRequest;
+    const branch = branches.find(
+      (item) => item.branch_id === payload.branch_id,
+    );
+    const checkpoint: ContextCheckpoint = {
+      id: `checkpoint-${checkpointCounter}`,
+      branch_id: payload.branch_id,
+      conversation_id: branch?.conversation_id ?? "",
+      label: payload.label,
+      at_event_ts: payload.at_event_ts,
+      created_at: "2026-01-02T00:00:00+00:00",
+    };
+    checkpointCounter += 1;
+    checkpoints = [...checkpoints, checkpoint];
+    return HttpResponse.json({ checkpoint });
+  }),
+  http.delete(`*${CONTEXT_CHECKPOINTS_PATH}/:checkpointId`, ({ params }) => {
+    const checkpointId = String(params.checkpointId);
+    checkpoints = checkpoints.filter((item) => item.id !== checkpointId);
+    return HttpResponse.json({ ok: true });
+  }),
+  http.post(
+    `*${CONTEXT_BRANCHES_PATH}/:branchId/rewind`,
+    async ({ params, request }) => {
+      const payload = (await request.json()) as { after_timestamp?: string };
+      return HttpResponse.json({
+        rewind: {
+          id: "rewind-1",
+          branch_id: String(params.branchId),
+          after_timestamp: payload.after_timestamp ?? "",
+          created_at: "2026-01-02T00:00:00+00:00",
+        },
+      });
+    },
+  ),
+  http.get(`*${CONTEXT_EXPORT_PATH}`, ({ request }) => {
+    const url = new URL(request.url);
+    const branchId = url.searchParams.get("branch_id");
+    const branch = branches.find((item) => item.branch_id === branchId);
+    return HttpResponse.json({
+      conversation_id: branch?.conversation_id ?? "",
+      branch_id: branchId,
+      divergence: {
+        parent_id: branch?.parent_id ?? null,
+        event_id: branch?.diverged_at_event_id ?? null,
+        event_ts: branch?.diverged_at_event_ts ?? null,
+      },
+      checkpoints: checkpoints.filter((item) => item.branch_id === branchId),
+      events: [],
+    });
+  }),
 ];

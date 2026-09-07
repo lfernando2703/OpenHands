@@ -2,16 +2,15 @@ import { GitBranch } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   CONTEXT_ACTION_CHECKPOINT_TEST_ID,
-  CONTEXT_ACTION_EXPORT_TEST_ID,
   CONTEXT_ACTION_REWIND_TEST_ID,
   CONTEXT_CATEGORY_FILES,
   CONTEXT_ENGINEERING_PANEL_TEST_ID,
 } from "#/api/context-service/context-constants";
 import { ContextCompositionCard } from "#/components/features/context/context-composition-card";
 import { ContextTreeView } from "#/components/features/context/context-tree-view";
+import { ExportContextButton } from "#/components/features/context/export-context-button";
 import { RelevanceListCard } from "#/components/features/context/relevance-list-card";
 import { BrandButton } from "#/components/features/settings/brand-button";
-import { StyledTooltip } from "#/components/shared/buttons/styled-tooltip";
 import { useOptionalConversationId } from "#/hooks/use-conversation-id";
 import { useContextBranches } from "#/hooks/query/use-context-branches";
 import { useContextEngineering } from "#/hooks/use-context-engineering";
@@ -24,6 +23,10 @@ export function ContextEngineeringPanel() {
   const { t } = useTranslation("openhands");
   const closePanel = useContextEngineeringStore((state) => state.closePanel);
   const openFork = useContextEngineeringStore((state) => state.openFork);
+  const openRewind = useContextEngineeringStore((state) => state.openRewind);
+  const openCheckpoint = useContextEngineeringStore(
+    (state) => state.openCheckpoint,
+  );
   const { conversationId } = useOptionalConversationId();
   const { data: branches } = useContextBranches(conversationId ?? undefined);
   const { navigateToTab } = useSelectConversationTab();
@@ -117,42 +120,23 @@ export function ContextEngineeringPanel() {
         >
           {t(I18nKey.CONTEXT$NEW_BRANCH)}
         </BrandButton>
-        <StyledTooltip content={t(I18nKey.CONTEXT$COMING_SOON)}>
-          <span>
-            <BrandButton
-              type="button"
-              variant="tertiary"
-              testId={CONTEXT_ACTION_REWIND_TEST_ID}
-              isDisabled
-            >
-              {t(I18nKey.CONTEXT$REWIND)}
-            </BrandButton>
-          </span>
-        </StyledTooltip>
-        <StyledTooltip content={t(I18nKey.CONTEXT$COMING_SOON)}>
-          <span>
-            <BrandButton
-              type="button"
-              variant="tertiary"
-              testId={CONTEXT_ACTION_CHECKPOINT_TEST_ID}
-              isDisabled
-            >
-              {t(I18nKey.CONTEXT$CHECKPOINT)}
-            </BrandButton>
-          </span>
-        </StyledTooltip>
-        <StyledTooltip content={t(I18nKey.CONTEXT$COMING_SOON)}>
-          <span>
-            <BrandButton
-              type="button"
-              variant="tertiary"
-              testId={CONTEXT_ACTION_EXPORT_TEST_ID}
-              isDisabled
-            >
-              {t(I18nKey.CONTEXT$EXPORT)}
-            </BrandButton>
-          </span>
-        </StyledTooltip>
+        <BrandButton
+          type="button"
+          variant="tertiary"
+          testId={CONTEXT_ACTION_REWIND_TEST_ID}
+          onClick={openRewind}
+        >
+          {t(I18nKey.CONTEXT$REWIND)}
+        </BrandButton>
+        <BrandButton
+          type="button"
+          variant="tertiary"
+          testId={CONTEXT_ACTION_CHECKPOINT_TEST_ID}
+          onClick={openCheckpoint}
+        >
+          {t(I18nKey.CONTEXT$CHECKPOINT)}
+        </BrandButton>
+        <ExportContextButton />
       </div>
     </aside>
   );

@@ -112,6 +112,21 @@ class ContextStore:
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS checkpoints (
+                id TEXT PRIMARY KEY,
+                branch_id TEXT NOT NULL,
+                label TEXT NOT NULL,
+                at_event_ts TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (branch_id) REFERENCES branches(branch_id)
+            );
+            CREATE TABLE IF NOT EXISTS rewinds (
+                id TEXT PRIMARY KEY,
+                branch_id TEXT NOT NULL,
+                after_timestamp TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (branch_id) REFERENCES branches(branch_id)
+            );
             """
         )
         existing = self.conn.execute(
@@ -337,4 +352,134 @@ class ContextStore:
             return {
                 "rejoin": record,
                 "branch": self._serialize(self._get_branch(branch_id)),
+            }
+
+    def _checkpoint_row(self, row: sqlite3.Row) -> dict[str, Any]:
+        data = _row_to_dict(row) or {}
+        branch = self._get_branch(str(data["branch_id"]))
+        data["conversation_id"] = branch["conversation_id"]
+        return data
+
+    def create_checkpoint(
+        self, branch_id: str, label: str, at_event_ts: str
+    ) -> dict[str, Any]:
+        label = (label or "").strip()
+        at_event_ts = (at_event_ts or "").strip()
+        branch_id = (branch_id or "").strip()
+        if not branch_id or not label or not at_event_ts:
+            raise ContextError("branch_id, label, and at_event_ts are required")
+        with self._lock:
+            self._get_branch(branch_id)
+            record = {
+                "id": new_id(),
+                "branch_id": branch_id,
+                "label": label,
+                "at_event_ts": at_event_ts,
+                "created_at": utc_now(),
+            }
+            self.conn.execute(
+                """
+                INSERT INTO checkpoints (id, branch_id, label, at_event_ts, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    record["id"],
+                    record["branch_id"],
+                    record["label"],
+                    record["at_event_ts"],
+                    record["created_at"],
+                ),
+            )
+            self.conn.commit()
+            record["conversation_id"] = self._get_branch(branch_id)["conversation_id"]
+            return record
+
+    def list_checkpoints(
+        self,
+        conversation_id: str | None = None,
+        branch_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        conversation_id = (conversation_id or "").strip() or None
+        branch_id = (branch_id or "").strip() or None
+        with self._lock:
+            if branch_id:
+                self._get_branch(branch_id)
+                rows = self.conn.execute(
+                    "SELECT * FROM checkpoints WHERE branch_id = ? ORDER BY created_at",
+                    (branch_id,),
+                ).fetchall()
+            elif conversation_id:
+                rows = self.conn.execute(
+                    """
+                    SELECT c.* FROM checkpoints c
+                    JOIN branches b ON b.branch_id = c.branch_id
+                    WHERE b.conversation_id = ?
+                    ORDER BY c.created_at
+                    """,
+                    (conversation_id,),
+                ).fetchall()
+            else:
+                raise ContextError("conversation_id or branch_id is required")
+            return [self._checkpoint_row(row) for row in rows]
+
+    def delete_checkpoint(self, checkpoint_id: str) -> None:
+        checkpoint_id = (checkpoint_id or "").strip()
+        if not checkpoint_id:
+            raise ContextError("checkpoint id is required")
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT id FROM checkpoints WHERE id = ?", (checkpoint_id,)
+            ).fetchone()
+            if row is None:
+                raise NotFoundError(f"checkpoint {checkpoint_id} not found")
+            self.conn.execute(
+                "DELETE FROM checkpoints WHERE id = ?", (checkpoint_id,)
+            )
+            self.conn.commit()
+
+    def record_rewind(self, branch_id: str, after_timestamp: str) -> dict[str, Any]:
+        after_timestamp = (after_timestamp or "").strip()
+        branch_id = (branch_id or "").strip()
+        if not branch_id or not after_timestamp:
+            raise ContextError("branch_id and after_timestamp are required")
+        with self._lock:
+            self._get_branch(branch_id)
+            record = {
+                "id": new_id(),
+                "branch_id": branch_id,
+                "after_timestamp": after_timestamp,
+                "created_at": utc_now(),
+            }
+            self.conn.execute(
+                """
+                INSERT INTO rewinds (id, branch_id, after_timestamp, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    record["id"],
+                    record["branch_id"],
+                    record["after_timestamp"],
+                    record["created_at"],
+                ),
+            )
+            self.conn.commit()
+            return record
+
+    def export_branch(self, branch_id: str) -> dict[str, Any]:
+        branch_id = (branch_id or "").strip()
+        if not branch_id:
+            raise ContextError("branch_id is required")
+        with self._lock:
+            branch = self._serialize(self._get_branch(branch_id))
+            checkpoints = self.list_checkpoints(branch_id=branch_id)
+            return {
+                "conversation_id": branch["conversation_id"],
+                "branch_id": branch_id,
+                "divergence": {
+                    "parent_id": branch["parent_id"],
+                    "event_id": branch["diverged_at_event_id"],
+                    "event_ts": branch["diverged_at_event_ts"],
+                },
+                "checkpoints": checkpoints,
+                "events": [],
             }

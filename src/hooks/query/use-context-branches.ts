@@ -74,3 +74,47 @@ export function usePutContextConfig() {
     onSuccess: () => invalidate(),
   });
 }
+
+export function useContextCheckpoints(conversationId?: string) {
+  return useQuery({
+    queryKey: CONTEXT_QUERY_KEYS.checkpoints(conversationId ?? ""),
+    queryFn: () =>
+      ContextService.listCheckpoints({ conversationId: conversationId ?? "" }),
+    enabled: Boolean(conversationId),
+  });
+}
+
+export function useCreateContextCheckpoint() {
+  const invalidate = useInvalidateContext();
+  return useMutation({
+    mutationFn: ContextService.createCheckpoint,
+    onSuccess: (checkpoint) => invalidate(checkpoint.conversation_id),
+  });
+}
+
+export function useDeleteContextCheckpoint() {
+  const invalidate = useInvalidateContext();
+  return useMutation({
+    mutationFn: ({
+      checkpointId,
+      conversationId,
+    }: {
+      checkpointId: string;
+      conversationId: string;
+    }) =>
+      ContextService.deleteCheckpoint(checkpointId).then(() => conversationId),
+    onSuccess: (conversationId) => invalidate(conversationId),
+  });
+}
+
+export function useRecordContextRewind() {
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      afterTimestamp,
+    }: {
+      branchId: string;
+      afterTimestamp: string;
+    }) => ContextService.recordRewind(branchId, afterTimestamp),
+  });
+}

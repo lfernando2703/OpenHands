@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import EventService from "#/api/event-service/event-service.api";
 import { useUserConversation } from "#/hooks/query/use-user-conversation";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import type { OpenHandsEvent } from "#/types/agent-server/core";
 
 /**
@@ -27,8 +28,14 @@ export interface ConversationHistoryPage {
  * scrolls up. The WebSocket then connects with `resend_mode='since'` using
  * the latest event's timestamp so we don't re-receive history we already have.
  */
-export const useConversationHistory = (conversationId?: string) => {
+export const useConversationHistory = (
+  conversationId?: string,
+  afterTimestamp?: string | null,
+) => {
   const { data: conversation } = useUserConversation(conversationId ?? null);
+  const storeAnchor = useContextEngineeringStore((state) => state.rewindAnchor);
+  const rewindAnchor =
+    afterTimestamp !== undefined ? afterTimestamp : storeAnchor;
 
   return useQuery<ConversationHistoryPage>({
     queryKey: [
@@ -38,6 +45,7 @@ export const useConversationHistory = (conversationId?: string) => {
       // re-provisioned cloud sandbox with a new URL) re-fetches.
       conversation?.conversation_url ?? null,
       conversation?.session_api_key ?? null,
+      rewindAnchor ?? null,
     ],
     enabled: !!conversationId && !!conversation,
     queryFn: async () => {
@@ -52,6 +60,7 @@ export const useConversationHistory = (conversationId?: string) => {
         {
           limit: INITIAL_HISTORY_PAGE_SIZE,
           sortOrder: "TIMESTAMP_DESC",
+          ...(rewindAnchor ? { timestampGte: rewindAnchor } : {}),
         },
       );
 

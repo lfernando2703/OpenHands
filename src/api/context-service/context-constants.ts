@@ -33,3 +33,16 @@ export type ContextCategory = (typeof CONTEXT_CATEGORIES)[number];
 export const CONTEXT_ACTION_REWIND_TEST_ID = "context-action-rewind";
 export const CONTEXT_ACTION_CHECKPOINT_TEST_ID = "context-action-checkpoint";
 export const CONTEXT_ACTION_EXPORT_TEST_ID = "context-action-export";
+
+export const CONTEXT_CHECKPOINTS_PATH = `${CONTEXT_API_PATH}/checkpoints`;
+export const CONTEXT_EXPORT_PATH = `${CONTEXT_API_PATH}/export`;
+
+export const CONTEXT_FORK_REVISION_PREFIX = "Revision:";
+
+export const CONTEXT_REWIND_DIALOG_TEST_ID = "context-rewind-dialog";
+export const CONTEXT_CHECKPOINT_DIALOG_TEST_ID = "context-checkpoint-dialog";
+export const CONTEXT_EDIT_COMPOSER_TEST_ID = "context-edit-composer";
+export const CONTEXT_EXPORT_BUTTON_TEST_ID = "context-export-button";
+
+export const CONTEXT_EXPORT_MARKDOWN_FILENAME = "context-export.md";
+export const CONTEXT_EXPORT_JSON_FILENAME = "context-export.json";

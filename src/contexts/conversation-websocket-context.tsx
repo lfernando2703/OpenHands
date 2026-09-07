@@ -65,6 +65,7 @@ import { trackError } from "#/utils/error-handler";
 import { useReadConversationFile } from "#/hooks/mutation/use-read-conversation-file";
 import useMetricsStore, { type MetricsState } from "#/stores/metrics-store";
 import { useConversationHistory } from "#/hooks/query/use-conversation-history";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import { setConversationState } from "#/utils/conversation-local-storage";
 import {
   recordModelSwitchMessage,
@@ -283,8 +284,12 @@ export function ConversationWebSocketProvider({
   // user scrolls to the top of the chat. The WebSocket connection waits for
   // this query so it can subscribe with `resend_mode='since'` and avoid
   // re-streaming everything REST already returned.
+  const rewindAnchor = useContextEngineeringStore(
+    (state) => state.rewindAnchor,
+  );
+  const rewindAnchorRef = useRef<string | null>(null);
   const { data: preloadedHistory, isPending: isPreloadingHistory } =
-    useConversationHistory(conversationId);
+    useConversationHistory(conversationId, rewindAnchor);
 
   // Skeleton only on the genuine first load (no cached data yet). On return the
   // cached page is present, so `isPending` is false and we render the
@@ -305,20 +310,33 @@ export function ConversationWebSocketProvider({
   // a no-op, so the store survives navigating away to Settings and back.
   useLayoutEffect(() => {
     const nextId = conversationId ?? null;
-    if (useEventStore.getState().loadedConversationId === nextId) {
+    const nextAnchor = rewindAnchor ?? null;
+    const sameConversation =
+      useEventStore.getState().loadedConversationId === nextId;
+    const sameRewind = rewindAnchorRef.current === nextAnchor;
+    if (sameConversation && sameRewind) {
       return;
     }
+    rewindAnchorRef.current = nextAnchor;
     // Single atomic action: clears the previous conversation's events and
     // records the new loaded id in one `set`, so no subscriber can observe a
     // half-applied state (events gone but the old id still reported).
     clearEventsForConversation(nextId);
+    if (sameConversation) {
+      return;
+    }
     resetBrowserStore();
     // The metrics store is conversation-scoped state too: without a reset the
     // previous conversation's usage/cost keeps rendering in the new
     // conversation's meter until fresh WS stats arrive — and a brand-new
     // conversation sends none, so the stale figure stuck indefinitely.
     useMetricsStore.getState().resetMetrics();
-  }, [conversationId, clearEventsForConversation, resetBrowserStore]);
+  }, [
+    conversationId,
+    rewindAnchor,
+    clearEventsForConversation,
+    resetBrowserStore,
+  ]);
 
   useLayoutEffect(() => {
     if (!preloadedHistory || preloadedHistory.events.length === 0) {
@@ -369,11 +387,12 @@ export function ConversationWebSocketProvider({
    * freshest value from the options ref at connect time.
    */
   const initialAfterTimestamp = useMemo<string | null>(() => {
+    if (rewindAnchor) return rewindAnchor;
     const events = preloadedHistory?.events ?? [];
     const latest = events[events.length - 1];
     if (!latest || !("timestamp" in latest) || !latest.timestamp) return null;
     return latest.timestamp;
-  }, [preloadedHistory]);
+  }, [preloadedHistory, rewindAnchor]);
 
   // Build WebSocket URL from props.
   //

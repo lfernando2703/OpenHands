@@ -13,6 +13,7 @@ import {
 } from "#/hooks/query/use-conversation-history";
 import EventService from "#/api/event-service/event-service.api";
 import { useUserConversation } from "#/hooks/query/use-user-conversation";
+import { useContextEngineeringStore } from "#/stores/context-engineering-store";
 import type { Conversation } from "#/api/open-hands.types";
 import type { OpenHandsEvent } from "#/types/agent-server/core";
 import type { EventSearchPage } from "#/api/event-service/event-service.types";
@@ -69,8 +70,13 @@ function wrapper({ children }: { children: React.ReactNode }) {
 // Tests
 // --------------------
 describe("useConversationHistory", () => {
+  beforeEach(() => {
+    useContextEngineeringStore.getState().setRewindAnchor(null);
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
+    useContextEngineeringStore.getState().setRewindAnchor(null);
   });
 
   it("requests the most recent INITIAL_HISTORY_PAGE_SIZE events sorted desc", async () => {
@@ -275,6 +281,41 @@ describe("useConversationHistory", () => {
     });
 
     expect(searchEventsSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes timestampGte when a rewind after_timestamp is provided", async () => {
+    vi.mocked(useUserConversation).mockReturnValue({
+      data: makeConversation("V1"),
+      isLoading: false,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.spyOn(EventService, "searchEvents").mockResolvedValue(
+      makePage([makeEvent("evt-after", "2026-03-01T00:00:00Z")]),
+    );
+
+    const { result } = renderHook(
+      () => useConversationHistory("conv-rewind", "2026-03-01T00:00:00Z"),
+      { wrapper },
+    );
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    expect(EventService.searchEvents).toHaveBeenCalledWith(
+      "conv-rewind",
+      null,
+      null,
+      {
+        limit: INITIAL_HISTORY_PAGE_SIZE,
+        sortOrder: "TIMESTAMP_DESC",
+        timestampGte: "2026-03-01T00:00:00Z",
+      },
+    );
   });
 });
 

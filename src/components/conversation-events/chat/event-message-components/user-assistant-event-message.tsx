@@ -1,5 +1,5 @@
 import React from "react";
-import { GitBranch } from "lucide-react";
+import { GitBranch, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "#/context/navigation-context";
 import { MessageEvent } from "#/types/agent-server/core";
@@ -41,6 +41,7 @@ export function UserAssistantEventMessage({
     (state) => state.setMessageToSend,
   );
   const openFork = useContextEngineeringStore((state) => state.openFork);
+  const openEdit = useContextEngineeringStore((state) => state.openEdit);
   // Blocks a same-tick double-click, before `isForking` flips.
   const forkInFlightRef = React.useRef(false);
 
@@ -105,29 +106,49 @@ export function UserAssistantEventMessage({
       },
     );
   };
-  const actions = canBranch
-    ? [
-        {
-          icon: <RepoForkedIcon width={15} height={15} aria-hidden />,
-          onClick: handleBranch,
-          tooltip: t(I18nKey.CHAT_INTERFACE$BRANCH_FROM_HERE),
+  const actions: Array<{
+    icon: React.ReactNode;
+    onClick: () => void;
+    tooltip?: string;
+  }> = [];
+  if (canBranch) {
+    actions.push(
+      {
+        icon: <RepoForkedIcon width={15} height={15} aria-hidden />,
+        onClick: handleBranch,
+        tooltip: t(I18nKey.CHAT_INTERFACE$BRANCH_FROM_HERE),
+      },
+      {
+        icon: <GitBranch size={15} aria-hidden />,
+        onClick: () => {
+          if (!conversationId) return;
+          openFork({
+            conversationId,
+            parentBranchId: null,
+            divergedAtEventTs: event.timestamp,
+            divergedAtEventId: event.id,
+            preview: message.slice(0, 80) || event.id,
+          });
         },
-        {
-          icon: <GitBranch size={15} aria-hidden />,
-          onClick: () => {
-            if (!conversationId) return;
-            openFork({
-              conversationId,
-              parentBranchId: null,
-              divergedAtEventTs: event.timestamp,
-              divergedAtEventId: event.id,
-              preview: message.slice(0, 80) || event.id,
-            });
-          },
-          tooltip: t(I18nKey.CONTEXT$FORK_HERE),
-        },
-      ]
-    : undefined;
+        tooltip: t(I18nKey.CONTEXT$FORK_HERE),
+      },
+    );
+  }
+  if (conversationId && event.source === "user" && message.length > 0) {
+    actions.push({
+      icon: <Pencil size={15} aria-hidden />,
+      onClick: () => {
+        openEdit({
+          conversationId,
+          parentBranchId: null,
+          divergedAtEventTs: event.timestamp,
+          divergedAtEventId: event.id,
+          originalText: message,
+        });
+      },
+      tooltip: t(I18nKey.CONTEXT$EDIT),
+    });
+  }
 
   return (
     <>
@@ -136,7 +157,7 @@ export function UserAssistantEventMessage({
         type={event.source}
         message={message}
         isFromPlanningAgent={isFromPlanningAgent}
-        actions={actions}
+        actions={actions.length > 0 ? actions : undefined}
         timestamp={event.timestamp}
       >
         {imageUrls.length > 0 && (
