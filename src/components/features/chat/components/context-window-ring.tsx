@@ -35,13 +35,15 @@ const TONE_STROKE = {
 interface ContextWindowRingProps {
   percentage: number;
   className?: string;
+  size?: number;
 }
 
 export function ContextWindowRing({
   percentage,
   className,
+  size = CONTEXT_WINDOW_RING_SIZE,
 }: ContextWindowRingProps) {
-  const radius = (CONTEXT_WINDOW_RING_SIZE - CONTEXT_WINDOW_RING_STROKE) / 2;
+  const radius = (size - CONTEXT_WINDOW_RING_STROKE) / 2;
   const circumference = 2 * Math.PI * radius;
   const clampedPercentage = Math.min(100, Math.max(0, percentage));
   const dashOffset = circumference - (clampedPercentage / 100) * circumference;
@@ -49,15 +51,15 @@ export function ContextWindowRing({
 
   return (
     <svg
-      width={CONTEXT_WINDOW_RING_SIZE}
-      height={CONTEXT_WINDOW_RING_SIZE}
-      viewBox={`0 0 ${CONTEXT_WINDOW_RING_SIZE} ${CONTEXT_WINDOW_RING_SIZE}`}
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
       className={cn("shrink-0", className)}
       aria-hidden
     >
       <circle
-        cx={CONTEXT_WINDOW_RING_SIZE / 2}
-        cy={CONTEXT_WINDOW_RING_SIZE / 2}
+        cx={size / 2}
+        cy={size / 2}
         r={radius}
         fill="none"
         style={{ stroke: CONTEXT_WINDOW_TRACK_COLOR }}
@@ -65,8 +67,8 @@ export function ContextWindowRing({
         data-testid="context-window-ring-track"
       />
       <circle
-        cx={CONTEXT_WINDOW_RING_SIZE / 2}
-        cy={CONTEXT_WINDOW_RING_SIZE / 2}
+        cx={size / 2}
+        cy={size / 2}
         r={radius}
         fill="none"
         stroke={TONE_STROKE[tone]}
@@ -74,7 +76,7 @@ export function ContextWindowRing({
         strokeLinecap="round"
         strokeDasharray={circumference}
         strokeDashoffset={dashOffset}
-        transform={`rotate(-90 ${CONTEXT_WINDOW_RING_SIZE / 2} ${CONTEXT_WINDOW_RING_SIZE / 2})`}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
         className="transition-[stroke-dashoffset,stroke] duration-300"
         data-testid="context-window-ring-arc"
       />

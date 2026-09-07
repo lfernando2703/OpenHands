@@ -13,3 +13,23 @@ export const DEFAULT_CONTEXT_MAX_DEPTH = 3;
 export const CONTEXT_ENGINEERING_PANEL_TEST_ID = "context-engineering-panel";
 export const CONTEXT_BRANCH_PANEL_TEST_ID = "context-branch-panel";
 export const CONTEXT_FORK_DIALOG_TEST_ID = "context-fork-dialog";
+
+export const CONTEXT_CATEGORY_HISTORY = "history";
+export const CONTEXT_CATEGORY_THOUGHTS = "thoughts";
+export const CONTEXT_CATEGORY_TOOLS = "tools";
+export const CONTEXT_CATEGORY_FILES = "files";
+export const CONTEXT_CATEGORY_TASK = "task";
+
+export const CONTEXT_CATEGORIES = [
+  CONTEXT_CATEGORY_HISTORY,
+  CONTEXT_CATEGORY_THOUGHTS,
+  CONTEXT_CATEGORY_TOOLS,
+  CONTEXT_CATEGORY_FILES,
+  CONTEXT_CATEGORY_TASK,
+] as const;
+
+export type ContextCategory = (typeof CONTEXT_CATEGORIES)[number];
+
+export const CONTEXT_ACTION_REWIND_TEST_ID = "context-action-rewind";
+export const CONTEXT_ACTION_CHECKPOINT_TEST_ID = "context-action-checkpoint";
+export const CONTEXT_ACTION_EXPORT_TEST_ID = "context-action-export";
